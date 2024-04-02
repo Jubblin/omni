@@ -6,6 +6,7 @@ talos:
   version: v1.3.0
 features:
   diskEncryption: true
+  useEmbeddedDiscoveryService: false
 patches:
   - file: patches/my-cluster-patch.yaml
   - file: ../testdata/patches/my-registry-mirrors.yaml

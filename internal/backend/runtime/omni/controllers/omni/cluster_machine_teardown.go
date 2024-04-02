@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -25,6 +26,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -33,6 +35,7 @@ import (
 	"github.com/siderolabs/omni/internal/backend/runtime"
 	"github.com/siderolabs/omni/internal/backend/runtime/kubernetes"
 	"github.com/siderolabs/omni/internal/backend/runtime/omni/controllers/omni/internal/mappers"
+	"github.com/siderolabs/omni/internal/pkg/siderolink"
 )
 
 // ClusterMachineTeardownControllerName is the name of the ClusterMachineTeardownController.
@@ -41,14 +44,20 @@ const ClusterMachineTeardownControllerName = "ClusterMachineTeardownController"
 // ClusterMachineTeardownController processes additional teardown steps for a machine leaving a machine set.
 type ClusterMachineTeardownController struct {
 	generic.NamedController
+
+	embeddedDiscoveryServiceEnabled bool
+	embeddedDiscoveryServicePort    int
 }
 
 // NewClusterMachineTeardownController initializes ClusterMachineTeardownController.
-func NewClusterMachineTeardownController() *ClusterMachineTeardownController {
+func NewClusterMachineTeardownController(embeddedDiscoveryServiceEnabled bool, embeddedDiscoveryServicePort int) *ClusterMachineTeardownController {
 	return &ClusterMachineTeardownController{
 		NamedController: generic.NamedController{
 			ControllerName: ClusterMachineTeardownControllerName,
 		},
+
+		embeddedDiscoveryServiceEnabled: embeddedDiscoveryServiceEnabled,
+		embeddedDiscoveryServicePort:    embeddedDiscoveryServicePort,
 	}
 }
 
@@ -359,17 +368,25 @@ func (ctrl *ClusterMachineTeardownController) teardownNode(
 }
 
 func (ctrl *ClusterMachineTeardownController) createDiscoveryClient(ctx context.Context) (*grpc.ClientConn, error) {
-	u, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
-	if err != nil {
-		return nil, err
+	var (
+		transportCredentials credentials.TransportCredentials
+		target               string
+	)
+
+	if ctrl.embeddedDiscoveryServiceEnabled {
+		target = net.JoinHostPort(siderolink.ListenHost, strconv.Itoa(ctrl.embeddedDiscoveryServicePort))
+		transportCredentials = insecure.NewCredentials()
+	} else {
+		u, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		target = net.JoinHostPort(u.Host, "443")
+		transportCredentials = credentials.NewTLS(&tls.Config{})
 	}
 
-	discoveryConn, err := grpc.DialContext(ctx, net.JoinHostPort(u.Host, "443"),
-		grpc.WithTransportCredentials(
-			credentials.NewTLS(&tls.Config{}),
-		),
-		grpc.WithSharedWriteBuffer(true),
-	)
+	discoveryConn, err := grpc.DialContext(ctx, target, grpc.WithTransportCredentials(transportCredentials), grpc.WithSharedWriteBuffer(true))
 	if err != nil {
 		return nil, err
 	}

@@ -215,6 +215,10 @@ message ClusterSpec {
     bool enable_workload_proxy = 1;
     // DiskEncryption enables disk encryption on all nodes.
     bool disk_encryption = 2;
+    // UseEmbeddedDiscoveryService enables the use of the Omni's embedded discovery service instead of the public one.
+    //
+    // If the discovery service feature is disabled in the machine config, this field is ignored.
+    bool use_embedded_discovery_service = 3;
   }
 
   // InstallImage the installer image to use.

@@ -322,6 +322,12 @@ func transformClusterToModel(cluster *omni.Cluster, patches []*omni.ConfigPatch)
 		return models.Cluster{}, err
 	}
 
+	var useEmbeddedDiscoveryService *bool
+
+	if !spec.GetFeatures().GetUseEmbeddedDiscoveryService() {
+		useEmbeddedDiscoveryService = pointer.To(false)
+	}
+
 	return models.Cluster{
 		Meta: models.Meta{
 			Kind: models.KindCluster,
@@ -335,8 +341,9 @@ func transformClusterToModel(cluster *omni.Cluster, patches []*omni.ConfigPatch)
 			Version: "v" + spec.GetTalosVersion(),
 		},
 		Features: models.Features{
-			DiskEncryption:      spec.GetFeatures().GetDiskEncryption(),
-			EnableWorkloadProxy: spec.GetFeatures().GetEnableWorkloadProxy(),
+			DiskEncryption:              spec.GetFeatures().GetDiskEncryption(),
+			EnableWorkloadProxy:         spec.GetFeatures().GetEnableWorkloadProxy(),
+			UseEmbeddedDiscoveryService: useEmbeddedDiscoveryService,
 			BackupConfiguration: models.BackupConfiguration{
 				Interval: backupIntervalDuration,
 			},

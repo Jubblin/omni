@@ -56,6 +56,7 @@ included in the LICENSE file.
           <t-checkbox :checked="state.cluster.features?.encryptDisks" label="Encrypt Disks" @click="state.cluster.features.encryptDisks = !state.cluster.features.encryptDisks && supportsEncryption" :disabled="!supportsEncryption"/>
         </tooltip>
         <cluster-workload-proxying-checkbox :checked="state.cluster.features.enableWorkloadProxy" @click="() => (state.cluster.features.enableWorkloadProxy = !state.cluster.features.enableWorkloadProxy)" class="h-8"/>
+        <embedded-discovery-service-checkbox :checked="state.cluster.features.useEmbeddedDiscoveryService" @click="() => (state.cluster.features.useEmbeddedDiscoveryService = !state.cluster.features.useEmbeddedDiscoveryService)" class="h-8"/>
         <cluster-etcd-backup-checkbox :backup-status="backupStatus" @update:cluster="(spec) => {
           state.cluster.etcdBackupConfig = spec.backup_configuration
         }" :cluster="{
@@ -169,6 +170,7 @@ import UntaintSingleNode from "@/views/omni/Modals/UntaintSingleNode.vue";
 import MachineSets from "./MachineSets.vue";
 import { initState, PatchID } from "@/states/cluster-management";
 import { setupBackupStatus } from "@/methods";
+import EmbeddedDiscoveryServiceCheckbox from "@/views/omni/Clusters/EmbeddedDiscoveryServiceCheckbox.vue";
 
 const labelContainer: Ref<Resource> = computed(() => {
   return {

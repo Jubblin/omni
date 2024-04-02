@@ -3,6 +3,8 @@ module github.com/siderolabs/omni
 go 1.22.2
 
 replace (
+	// todo: replace after https://github.com/siderolabs/discovery-service/pull/56 is merged
+	github.com/siderolabs/discovery-service => github.com/utkuozdemir/sidero-discovery-service v0.0.0-20240328101258-3a6936e67797
 	// use nested module
 	github.com/siderolabs/omni/client => ./client
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
@@ -52,9 +54,10 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/jxskiss/base62 v1.1.0
 	github.com/mattn/go-shellwords v1.0.12
-	github.com/prometheus/client_golang v1.18.0
+	github.com/prometheus/client_golang v1.19.0
 	github.com/siderolabs/crypto v0.4.4
-	github.com/siderolabs/discovery-api v0.1.3
+	github.com/siderolabs/discovery-api v0.1.4
+	github.com/siderolabs/discovery-service v0.1.3
 	github.com/siderolabs/gen v0.4.8
 	github.com/siderolabs/go-api-signature v0.3.2
 	github.com/siderolabs/go-circular v0.1.0
@@ -85,6 +88,7 @@ require (
 	golang.org/x/crypto v0.21.0
 	golang.org/x/net v0.23.0
 	golang.org/x/sync v0.6.0
+	golang.org/x/sys v0.18.0
 	golang.org/x/text v0.14.0
 	golang.org/x/tools v0.19.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
@@ -156,6 +160,7 @@ require (
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gosuri/uiprogress v0.0.1 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
@@ -177,7 +182,6 @@ require (
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/mdlayher/ethtool v0.1.0 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
 	github.com/mdlayher/netlink v1.7.2 // indirect
@@ -195,7 +199,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.45.0 // indirect
+	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/russellhaering/goxmldsig v1.4.0 // indirect
@@ -233,7 +237,6 @@ require (
 	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 // indirect
 	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect

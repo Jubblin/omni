@@ -439,6 +439,22 @@ export const setClusterWorkloadProxy = async (clusterID: string, enabled: boolea
   await ResourceService.Update(resource, resource.metadata.version, withRuntime(Runtime.Omni));
 };
 
+export const setUseEmbeddedDiscoveryService = async (clusterID: string, enabled: boolean) => {
+  const resource: ResourceTyped<ClusterSpec> = await ResourceService.Get({
+    type: ClusterType,
+    namespace: DefaultNamespace,
+    id: clusterID
+  }, withRuntime(Runtime.Omni));
+
+  if (!resource.spec.features) {
+    resource.spec.features = {}
+  }
+
+  resource.spec.features.use_embedded_discovery_service = enabled;
+
+  await ResourceService.Update(resource, resource.metadata.version, withRuntime(Runtime.Omni));
+};
+
 export const setClusterEtcdBackupsConfig = async (clusterID: string, spec: ClusterSpec) => {
   const resource: ResourceTyped<ClusterSpec> = await ResourceService.Get({
     type: ClusterType,

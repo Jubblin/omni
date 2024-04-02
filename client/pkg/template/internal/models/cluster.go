@@ -26,7 +26,7 @@ import (
 const KindCluster = "Cluster"
 
 // Cluster is a top-level template object.
-type Cluster struct { //nolint:govet
+type Cluster struct {
 	Meta             `yaml:",inline"`
 	SystemExtensions `yaml:",inline"`
 
@@ -50,11 +50,15 @@ type Cluster struct { //nolint:govet
 }
 
 // Features defines cluster-wide features.
-type Features struct {
+type Features struct { //nolint:govet
 	// DiskEncryption enables KMS encryption.
 	DiskEncryption bool `yaml:"diskEncryption,omitempty"`
 	// EnableWorkloadProxy enables workload proxy.
 	EnableWorkloadProxy bool `yaml:"enableWorkloadProxy,omitempty"`
+	// UseEmbeddedDiscoveryService enables the use of embedded discovery service.
+	//
+	// Defaults to true when not set.
+	UseEmbeddedDiscoveryService *bool `yaml:"useEmbeddedDiscoveryService,omitempty"`
 	// BackupConfiguration contains backup configuration settings.
 	BackupConfiguration BackupConfiguration `yaml:"backupConfiguration,omitempty"`
 }
@@ -155,7 +159,8 @@ func (cluster *Cluster) Translate(ctx TranslateContext) ([]resource.Resource, er
 	cluster.Descriptors.Apply(clusterResource)
 
 	clusterResource.TypedSpec().Value.Features = &specs.ClusterSpec_Features{
-		EnableWorkloadProxy: cluster.Features.EnableWorkloadProxy,
+		EnableWorkloadProxy:         cluster.Features.EnableWorkloadProxy,
+		UseEmbeddedDiscoveryService: cluster.Features.UseEmbeddedDiscoveryService == nil || *cluster.Features.UseEmbeddedDiscoveryService,
 	}
 
 	clusterResource.TypedSpec().Value.KubernetesVersion = strings.TrimLeft(cluster.Kubernetes.Version, "v")

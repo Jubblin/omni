@@ -429,4 +429,17 @@ func init() {
 		config.Config.DisableControllerRuntimeCache,
 		"disable watch-based cache for controller-runtime (affects performance)",
 	)
+
+	rootCmd.Flags().BoolVar(
+		&config.Config.EmbeddedDiscoveryService.Enabled,
+		"embedded-discovery-service-enabled",
+		config.Config.EmbeddedDiscoveryService.Enabled,
+		"enable embedded discovery service, binds only to the siderolink wireguard address",
+	)
+	rootCmd.Flags().IntVar(
+		&config.Config.EmbeddedDiscoveryService.Port,
+		"embedded-discovery-service-endpoint",
+		config.Config.EmbeddedDiscoveryService.Port,
+		"embedded discovery service port to listen on",
+	)
 }

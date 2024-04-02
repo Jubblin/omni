@@ -100,6 +100,7 @@ export type Cluster = {
   features: {
     encryptDisks?: boolean
     enableWorkloadProxy?: boolean
+    useEmbeddedDiscoveryService?: boolean;
   }
   etcdBackupConfig?: EtcdBackupConf,
   patches: Record<string, ConfigPatch>
@@ -119,7 +120,9 @@ export class State {
     talosVersion: DefaultTalosVersion,
     kubernetesVersion: DefaultKubernetesVersion,
     patches: {},
-    features: {},
+    features: {
+      useEmbeddedDiscoveryService: true,
+    },
   };
 
   public index: number = 1;
@@ -286,6 +289,13 @@ export class State {
       cluster.spec.features = {
         ...cluster.spec.features,
         enable_workload_proxy: this.cluster.features?.enableWorkloadProxy,
+      }
+    }
+
+    if (this.cluster.features.useEmbeddedDiscoveryService) {
+      cluster.spec.features = {
+        ...cluster.spec.features,
+        use_embedded_discovery_service: this.cluster.features?.useEmbeddedDiscoveryService,
       }
     }
 

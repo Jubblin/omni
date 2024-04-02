@@ -219,6 +219,7 @@ export type TalosConfigSpec = {
 export type ClusterSpecFeatures = {
   enable_workload_proxy?: boolean
   disk_encryption?: boolean
+  use_embedded_discovery_service?: boolean
 }
 
 export type ClusterSpec = {

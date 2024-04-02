@@ -330,6 +330,7 @@ func (m *ClusterSpec_Features) CloneVT() *ClusterSpec_Features {
 	r := new(ClusterSpec_Features)
 	r.EnableWorkloadProxy = m.EnableWorkloadProxy
 	r.DiskEncryption = m.DiskEncryption
+	r.UseEmbeddedDiscoveryService = m.UseEmbeddedDiscoveryService
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -2319,6 +2320,9 @@ func (this *ClusterSpec_Features) EqualVT(that *ClusterSpec_Features) bool {
 		return false
 	}
 	if this.DiskEncryption != that.DiskEncryption {
+		return false
+	}
+	if this.UseEmbeddedDiscoveryService != that.UseEmbeddedDiscoveryService {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -5240,6 +5244,16 @@ func (m *ClusterSpec_Features) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.UseEmbeddedDiscoveryService {
+		i--
+		if m.UseEmbeddedDiscoveryService {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x18
 	}
 	if m.DiskEncryption {
 		i--
@@ -9605,6 +9619,9 @@ func (m *ClusterSpec_Features) SizeVT() (n int) {
 	if m.DiskEncryption {
 		n += 2
 	}
+	if m.UseEmbeddedDiscoveryService {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -13749,6 +13766,26 @@ func (m *ClusterSpec_Features) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.DiskEncryption = bool(v != 0)
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UseEmbeddedDiscoveryService", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.UseEmbeddedDiscoveryService = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

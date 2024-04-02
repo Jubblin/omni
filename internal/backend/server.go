@@ -37,13 +37,18 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	serverpb "github.com/siderolabs/discovery-api/api/v1alpha1/server/pb"
+	discoveryserver "github.com/siderolabs/discovery-service/pkg/server"
+	discoveryservicestate "github.com/siderolabs/discovery-service/pkg/state"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-api-signature/pkg/pgp"
+	"github.com/siderolabs/go-retry/retry"
 	talosconstants "github.com/siderolabs/talos/pkg/machinery/constants"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -271,6 +276,12 @@ func (s *Server) Run(ctx context.Context) error {
 
 	if err = runLocalResourceServer(ctx, runtimeState, serverOptions, eg, s.logger); err != nil {
 		return fmt.Errorf("failed to run local resource server: %w", err)
+	}
+
+	if config.Config.EmbeddedDiscoveryService.Enabled {
+		if err = runEmbeddedDiscoveryServer(ctx, serverOptions, eg, s.logger); err != nil {
+			return fmt.Errorf("failed to run discovery server over Siderolink: %w", err)
+		}
 	}
 
 	return eg.Wait()
@@ -502,7 +513,7 @@ func (s *Server) runMachineAPI(ctx context.Context) error {
 
 	eg.Go(func() error {
 		return slink.Run(groupCtx,
-			"",
+			siderolink.ListenHost,
 			strconv.Itoa(config.Config.EventSinkPort),
 			strconv.Itoa(talosconstants.TrustdPort),
 			strconv.Itoa(config.Config.LogServerPort),
@@ -898,6 +909,62 @@ func runLocalResourceServer(ctx context.Context, st state.CoreState, serverOptio
 	v1alpha1.RegisterStateServer(grpcServer, protobufserver.NewState(readOnlyState))
 
 	logger.Info("starting local resource server")
+
+	grpcutil.RunServer(ctx, grpcServer, listener, eg)
+
+	return nil
+}
+
+// runEmbeddedDiscoveryServer runs an embedded discovery server over Siderolink.
+func runEmbeddedDiscoveryServer(ctx context.Context, serverOptions []grpc.ServerOption, eg *errgroup.Group, logger *zap.Logger) error {
+	var (
+		listener net.Listener
+		err      error
+		address  = net.JoinHostPort(siderolink.ListenHost, strconv.Itoa(config.Config.EmbeddedDiscoveryService.Port))
+	)
+
+	if err = retry.Constant(30*time.Second, retry.WithUnits(time.Second)).RetryWithContext(ctx, func(context.Context) error {
+		listener, err = net.Listen("tcp", address)
+		if err != nil {
+			if errors.Is(err, unix.EADDRNOTAVAIL) {
+				return retry.ExpectedErrorf("siderolink listen address %q is not yet available: %w", address, err)
+			}
+
+			return fmt.Errorf("failed to listen: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to listen: %w", err)
+	}
+
+	discoveryServiceState := discoveryservicestate.NewState(logger.With(logging.Component("discovery_service")))
+	clusterServer := discoveryserver.NewClusterServer(discoveryServiceState, ctx.Done(), "")
+
+	prometheus.MustRegister(clusterServer)
+
+	unaryInterceptor := grpc.UnaryServerInterceptor(func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		return handler(actor.MarkContextAsInternalActor(ctx), req)
+	})
+
+	streamInterceptor := grpc.StreamServerInterceptor(func(srv interface{}, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		return handler(srv, &grpc_middleware.WrappedServerStream{
+			ServerStream:   ss,
+			WrappedContext: actor.MarkContextAsInternalActor(ss.Context()),
+		})
+	})
+
+	serverOptions = append([]grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(unaryInterceptor),
+		grpc.ChainStreamInterceptor(streamInterceptor),
+		grpc.SharedWriteBuffer(true),
+	}, serverOptions...)
+
+	grpcServer := grpc.NewServer(serverOptions...)
+
+	serverpb.RegisterClusterServer(grpcServer, clusterServer)
+
+	logger.Info("starting discovery service in siderolink", zap.String("address", listener.Addr().String()))
 
 	grpcutil.RunServer(ctx, grpcServer, listener, eg)
 

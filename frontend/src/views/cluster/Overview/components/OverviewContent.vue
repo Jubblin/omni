@@ -157,6 +157,8 @@ included in the LICENSE file.
             </div>
             <div class="flex flex-col gap-2">
               <cluster-workload-proxying-checkbox :checked="enableWorkloadProxy" @click="setClusterWorkloadProxy(context.cluster, !enableWorkloadProxy)" :disabled="!canManageClusterFeatures"/>
+              <embedded-discovery-service-checkbox :checked="useEmbeddedDiscoveryService" @click="setUseEmbeddedDiscoveryService(context.cluster, !useEmbeddedDiscoveryService)"
+                  :disabled="!canManageClusterFeatures"/>
               <cluster-etcd-backup-checkbox :backup-status="backupStatus" @update:cluster="(spec) => setClusterEtcdBackupsConfig(context.cluster, spec)" :cluster="currentCluster.spec"/>
             </div>
           </div>
@@ -198,7 +200,7 @@ import {
   revertKubernetesUpgrade,
   revertTalosUpgrade,
   setClusterWorkloadProxy,
-  setClusterEtcdBackupsConfig,
+  setClusterEtcdBackupsConfig, setUseEmbeddedDiscoveryService,
 } from "@/methods/cluster";
 import {
   ClusterSpec,
@@ -221,6 +223,7 @@ import { setupClusterPermissions } from "@/methods/auth";
 import { setupWorkloadProxyingEnabledFeatureWatch } from "@/methods/features";
 import ClusterWorkloadProxyingCheckbox from "@/views/omni/Clusters/ClusterWorkloadProxyingCheckbox.vue";
 import ClusterEtcdBackupCheckbox from "@/views/omni/Clusters/ClusterEtcdBackupCheckbox.vue";
+import EmbeddedDiscoveryServiceCheckbox from "@/views/omni/Clusters/EmbeddedDiscoveryServiceCheckbox.vue";
 
 type Props = {
   currentCluster: Resource<ClusterSpec>,
@@ -230,9 +233,11 @@ const props = defineProps<Props>()
 const { currentCluster } = toRefs(props);
 
 const enableWorkloadProxy = ref(currentCluster.value.spec.features?.enable_workload_proxy || false);
+const useEmbeddedDiscoveryService = ref(currentCluster.value.spec.features?.use_embedded_discovery_service || false);
 
 watch(currentCluster, (cluster) => {
   enableWorkloadProxy.value = cluster.spec.features?.enable_workload_proxy || false;
+  useEmbeddedDiscoveryService.value = cluster.spec.features?.use_embedded_discovery_service || false;
 });
 
 const { status: backupStatus } = setupBackupStatus();
